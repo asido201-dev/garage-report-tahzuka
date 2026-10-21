@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דיווח רכבים במוסך</title>
+<style>
+  :root{--bg:#f4f6fb;--surface:#fff;--surface-2:#eef1f8;--ink:#1c1e26;--ink-dim:#5f6473;--primary:#3b5bdb;--primary-dark:#2f4ac4;--fault:#e03131;--ok:#2f9e44;--radius:14px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:12px;line-height:1.45}
+  .container{max-width:980px;margin:0 auto}
+  h1{margin:0 0 6px;font-size:1.45rem}
+  .sub{color:var(--ink-dim);margin:0 0 16px;font-size:.95rem}
+  .card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04)}
+  label{display:block;font-size:.85rem;margin-bottom:4px;color:var(--ink-dim);font-weight:500}
+  input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid transparent;border-radius:10px;background:var(--surface-2);font-size:1rem;margin-bottom:10px}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff}
+  button{background:var(--primary);color:#fff;border:none;padding:11px 16px;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600;transition:transform .15s ease,background .15s ease,box-shadow .15s ease}
+  button:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
+  button:active{transform:translateY(0);box-shadow:none}
+  button.secondary{background:#6c757d}
+  button.secondary:hover{background:#5a6268}
+  button.danger{background:var(--fault)}
+  button.danger:hover{background:#c92a2a}
+  button.ok{background:var(--ok)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .status{padding:10px;border-radius:8px;margin:8px 0;display:none}
+  .status.show{display:block}
+  .status.ok{background:#e6f4ea;color:var(--ok)}
+  .status.error{background:#fdecea;color:var(--fault)}
+  .vehicle-card{border:1px solid #e6e8ef;border-radius:12px;padding:12px;margin-bottom:10px;background:#fafbff}
+  .days{font-weight:700;color:var(--primary)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+  .toolbar input,.toolbar select{margin:0;flex:1;min-width:140px}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  #loginScreen{max-width:380px;margin:40px auto}
+  .hidden{display:none}
+  @media(max-width:600px){
+    .grid{grid-template-columns:1fr}
+    h1{font-size:1.3rem}
+    .toolbar{flex-direction:column;align-items:stretch}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="loginScreen" class="card">
+    <h1>דיווח רכבים במוסך</h1>
+    <p class="sub">הזן סיסמה כדי להיכנס</p>
+    <input type="password" id="loginPassword" placeholder="סיסמה">
+    <button onclick="doLogin()">כניסה</button>
+    <div id="loginStatus" class="status"></div>
+  </div>
+
+  <div id="mainContent" class="hidden">
+    <h1>דיווח רכבים במוסך</h1>
+    <p class="sub">דיווח ועדכון רכבים בטיפול</p>
+
+    <div class="toolbar">
+      <input type="text" id="searchPlate" placeholder="חיפוש לפי מספר רכב">
+      <select id="filterSupervisor"><option value="">כל המפקחים</option></select>
+      <button onclick="applyFilters()">סנן</button>
+      <button class="secondary" onclick="loadActive()">הצג הכל</button>
+      <button class="ok" onclick="exportCSV()">ייצוא Excel</button>
+      <button class="secondary" onclick="exportPDF()">ייצוא PDF</button>
+    </div>
+
+    <div id="board" class="card">
+      <h2 style="margin:0 0 12px;font-size:1.15rem">כלי רכב במוסך כרגע</h2>
+      <div id="boardList">טוען...</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 12px;font-size:1.15rem" id="formTitle">דיווח חדש</h2>
+      <form id="reportForm" onsubmit="return submitReport(event)">
+        <input type="hidden" name="id" id="editId">
+        <div class="grid">
+          <div><label>מספר רכב *</label><input type="text" name="plate" required></div>
+          <div><label>שם המפקח *</label><input type="text" name="supervisor" required></div>
+          <div><label>מוסך מטפל</label><input type="text" name="garage"></div>
+          <div><label>תאריך כניסה *</label><input type="date" name="entryDate" required></div>
+          <div>
+            <label>אגף/מחוז *</label>
+            <select name="department" required>
+              <option value="">בחרו</option>
+              <option>צפון</option><option>דרום</option><option>מרכז</option>
+              <option>ירושלים</option><option>תל אביב</option><option>ש״י</option>
+              <option>מג״ב</option><option>משמר לאומי</option><option>את״ן</option>
+              <option>אג״מ</option><option>אח״מ</option><option>להב</option>
+              <option>את״ל</option><option>אג״ת</option><option>אמ״ש</option>
+              <option>אה״ד</option><option>אק״מ</option>
+            </select>
+          </div>
+          <div>
+            <label>סוג שירות *</label>
+            <select name="serviceType" required>
+              <option value="">בחרו</option>
+              <option>תחזוקה</option>
+              <option>תיקון תאונה/נזק</option>
+            </select>
+          </div>
+          <div>
+            <label>שנת דגם</label>
+            <select name="modelYear" id="modelYearSelect"><option value="">בחרו</option></select>
+          </div>
+          <div>
+            <label>תיאור תקלה *</label>
+            <select name="faultDesc" required>
+              <option value="">בחרו</option>
+              <option>מנוע</option><option>גיר</option><option>חשמל ואלקטרוניקה</option>
+              <option>מערכת קירור</option><option>מערכת פליטה</option><option>נזילות שמן</option>
+              <option>מערכת היגוי</option><option>מערכת העברת הכח</option><option>בולמים</option>
+              <option>מערכת ABS</option><option>כריות אוויר</option><option>תיקון ת.ד / נזק</option>
+            </select>
+          </div>
+          <div><label>חלק הנדרש להחלפה</label><input type="text" name="partToReplace"></div>
+          <div>
+            <label>סיבת שהיה *</label>
+            <select name="stayReason" required>
+              <option value="">בחרו</option>
+              <option>ממתין לאבחון</option><option>ממתין להצעה</option><option>ממתין לשמאי</option>
+              <option>עבודה</option><option>חלפים</option><option>ממתין לאישור ענבל</option>
+              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון/השבתה</option>
+            </select>
+          </div>
+          <div>
+            <label>רכב חליפי</label>
+            <select name="replacementCar">
+              <option value="">בחרו</option>
+              <option>כן</option><option>לא</option>
+            </select>
+          </div>
+        </div>
+        <div><label>התייחסות מפקח</label><textarea name="supervisorNote" rows="3"></textarea></div>
+        <div class="actions">
+          <button type="submit" id="submitBtn">שלח דיווח</button>
+          <button type="button" class="secondary" onclick="resetForm()" id="cancelEdit" style="display:none">ביטול עריכה</button>
+        </div>
+        <div id="formStatus" class="status"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-m3kchRGzzfpWqgzyhiNDmC3ir3xX70dI86_hLrr8fOjfKbL6KICrfgb81XkR73gMNQ/exec";
+let currentPassword = "";
+let allItems = [];
+
+(function fillYears(){
+  const sel = document.getElementById("modelYearSelect");
+  for(let y=2027; y>=1970; y--){
+    const o = document.createElement("option");
+    o.value = o.textContent = y;
+    sel.appendChild(o);
+  }
+})();
+
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const timeout = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 25000);
+    function cleanup() { clearTimeout(timeout); delete window[cb]; script.remove(); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    params.callback = cb;
+    params.password = currentPassword;
+    script.src = APPS_SCRIPT_URL + "?" + new URLSearchParams(params).toString();
+    script.onerror = () => { cleanup(); reject(new Error("network")); };
+    document.body.appendChild(script);
+  });
+}
+
+function showStatus(el, msg, kind) {
+  el.textContent = msg;
+  el.className = "status show " + kind;
+  setTimeout(() => el.classList.remove("show"), 3500);
+}
+
+function doLogin() {
+  currentPassword = document.getElementById("loginPassword").value.trim();
+  if (!currentPassword) return;
+  jsonp({ action: "list" }).then(data => {
+    if (data.error) {
+      showStatus(document.getElementById("loginStatus"), data.error, "error");
+      currentPassword = "";
+    } else {
+      document.getElementById("loginScreen").classList.add("hidden");
+      document.getElementById("mainContent").classList.remove("hidden");
+      allItems = data.items || [];
+      populateSupervisors();
+      renderBoard(allItems);
+      document.querySelector('input[name="entryDate"]').value = new Date().toISOString().slice(0,10);
+    }
+  }).catch(() => showStatus(document.getElementById("loginStatus"), "שגיאת תקשורת", "error"));
+}
+
+function loadActive() {
+  document.getElementById("searchPlate").value = "";
+  document.getElementById("filterSupervisor").value = "";
+  jsonp({ action: "list" }).then(data => {
+    allItems = data.items || [];
+    populateSupervisors();
+    renderBoard(allItems);
+  });
+}
+
+function populateSupervisors() {
+  const sel = document.getElementById("filterSupervisor");
+  const current = sel.value;
+  const names = [...new Set(allItems.map(i => i.supervisor).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">כל המפקחים</option>' + names.map(n => `<option>${n}</option>`).join("");
+  if (names.includes(current)) sel.value = current;
+}
+
+function applyFilters() {
+  const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
+  const sup = document.getElementById("filterSupervisor").value;
+  let filtered = allItems;
+  if (plate) filtered = filtered.filter(i => String(i.plate).toLowerCase().includes(plate));
+  if (sup) filtered = filtered.filter(i => i.supervisor === sup);
+  renderBoard(filtered);
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return "–";
+  const d = new Date(dateStr.slice(0,10));
+  if (isNaN(d)) return "–";
+  const now = new Date(); now.setHours(0,0,0,0);
+  const diff = Math.round((now - d) / 86400000);
+  return diff === 0 ? "היום" : diff === 1 ? "יום 1" : diff + " ימים";
+}
+
+function daysSinceNum(dateStr) {
+  if (!dateStr) return 0;
+  const d = new Date(dateStr.slice(0,10));
+  if (isNaN(d)) return 0;
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((now - d) / 86400000);
+}
+
+function renderBoard(items) {
+  const list = document.getElementById("boardList");
+  if (!items.length) { list.innerHTML = "<p>אין רכבים להצגה</p>"; return; }
+  list.innerHTML = items.map(it => {
+    const daysNum = it.exitDate ? 0 : daysSinceNum(it.entryDate);
+    const daysText = it.exitDate ? "יצא" : daysSince(it.entryDate);
+    let border = "#e6e8ef";
+    let bg = "#fafbff";
+    if (!it.exitDate && daysNum >= 14) { border = "#e03131"; bg = "#fff5f5"; }
+    else if (!it.exitDate && daysNum >= 7) { border = "#f59f00"; bg = "#fff9db"; }
+    return `<div class="vehicle-card" style="border-color:${border};background:${bg}">
+      <strong>${it.plate||"–"}</strong> &nbsp;|&nbsp; <span class="days">${daysText}</span><br>
+      מפקח: ${it.supervisor||"–"} &nbsp;|&nbsp; מוסך: ${it.garage||"–"}<br>
+      אגף: ${it.department||"–"} &nbsp;|&nbsp; סוג: ${it.serviceType||"–"}<br>
+      תקלה: ${it.faultDesc||"–"} &nbsp;|&nbsp; חלק: ${it.partToReplace||"–"}<br>
+      סיבה: ${it.stayReason||"–"} &nbsp;|&nbsp; שנה: ${it.modelYear||"–"}<br>
+      רכב חליפי: ${it.replacementCar||"–"}<br>
+      התייחסות: ${it.supervisorNote||"–"}<br>
+      נכנס: ${it.entryDate||"–"}
+      <div class="actions">
+        ${!it.exitDate ? `<button class="danger" onclick="markExit('${it.id}')">יצא מהמוסך</button>` : `<span>יצא ב-${it.exitDate}</span>`}
+        <button class="secondary" onclick="editReport('${it.id}')">עריכה</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function markExit(id) {
+  if (!confirm("לסמן שהרכב יצא מהמוסך?")) return;
+  jsonp({ action: "exit", id }).then(data => {
+    if (data.success) { alert("סומן בהצלחה"); loadActive(); }
+    else alert(data.error || "שגיאה");
+  });
+}
+
+function editReport(id) {
+  jsonp({ action: "getOne", id }).then(data => {
+    if (!data.item) return alert("לא נמצא");
+    const it = data.item;
+    const form = document.getElementById("reportForm");
+    form.id.value = it.id;
+    form.plate.value = it.plate || "";
+    form.supervisor.value = it.supervisor || "";
+    form.garage.value = it.garage || "";
+    form.entryDate.value = it.entryDate || "";
+    form.department.value = it.department || "";
+    form.serviceType.value = it.serviceType || "";
+    form.modelYear.value = it.modelYear || "";
+    form.faultDesc.value = it.faultDesc || "";
+    form.partToReplace.value = it.partToReplace || "";
+    form.stayReason.value = it.stayReason || "";
+    form.replacementCar.value = it.replacementCar || "";
+    form.supervisorNote.value = it.supervisorNote || "";
+    document.getElementById("formTitle").textContent = "עריכת דיווח";
+    document.getElementById("submitBtn").textContent = "עדכן דיווח";
+    document.getElementById("cancelEdit").style.display = "inline-block";
+    form.scrollIntoView({behavior:"smooth"});
+  });
+}
+
+function resetForm() {
+  const form = document.getElementById("reportForm");
+  form.reset();
+  form.id.value = "";
+  document.getElementById("formTitle").textContent = "דיווח חדש";
+  document.getElementById("submitBtn").textContent = "שלח דיווח";
+  document.getElementById("cancelEdit").style.display = "none";
+  document.querySelector('input[name="entryDate"]').value = new Date().toISOString().slice(0,10);
+}
+
+function submitReport(ev) {
+  ev.preventDefault();
+  const form = ev.target;
+  const data = new FormData(form);
+  const params = { action: form.id.value ? "update" : "add" };
+  for (const [k,v] of data.entries()) params[k] = v;
+  const statusEl = document.getElementById("formStatus");
+  jsonp(params).then(res => {
+    if (res.success) {
+      showStatus(statusEl, form.id.value ? "הדיווח עודכן" : "הדיווח נשלח", "ok");
+      resetForm();
+      loadActive();
+    } else showStatus(statusEl, res.error || "שגיאה", "error");
+  }).catch(() => showStatus(statusEl, "שגיאת תקשורת", "error"));
+  return false;
+}
+
+function exportCSV() {
+  if (!allItems.length) return alert("אין נתונים");
+  const headers = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","supervisorNote","exitDate"];
+  const rows = [headers.join(",")];
+  allItems.forEach(it => {
+    rows.push(headers.map(h => `"${(it[h]||"").toString().replace(/"/g,'""')}"`).join(","));
+  });
+  const blob = new Blob(["\uFEFF" + rows.join("\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "garage-report.csv";
+  a.click();
+}
+
+function exportPDF() {
+  window.print();
+}
+</script>
+</body>
+</html>
