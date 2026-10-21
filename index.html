@@ -82,27 +82,15 @@
           <div><label>תאריך כניסה *</label><input type="date" name="entryDate" required></div>
           <div>
             <label>אגף/מחוז *</label>
-        <select name="department" required>
-  <option value="">בחרו</option>
-  <option>צפון</option>
-  <option>דרום</option>
-  <option>מרכז</option>
-  <option>ירושלים</option>
-  <option>תל אביב</option>
-  <option>חוף</option>
-  <option>ש״י</option>
-  <option>מג״ב</option>
-  <option>משמר לאומי</option>
-  <option>את״ן</option>
-  <option>אג״מ</option>
-  <option>אח״מ</option>
-  <option>להב</option>
-  <option>את״ל</option>
-  <option>אג״ת</option>
-  <option>אמ״ש</option>
-  <option>אה״ד</option>
-  <option>אק״מ</option>
-</select>
+            <select name="department" required>
+              <option value="">בחרו</option>
+              <option>צפון</option><option>דרום</option><option>מרכז</option>
+              <option>ירושלים</option><option>תל אביב</option><option>חוף</option>
+              <option>ש״י</option><option>מג״ב</option><option>משמר לאומי</option>
+              <option>את״ן</option><option>אג״מ</option><option>אח״מ</option>
+              <option>להב</option><option>את״ל</option><option>אג״ת</option>
+              <option>אמ״ש</option><option>אה״ד</option><option>אק״מ</option>
+            </select>
           </div>
           <div>
             <label>סוג שירות *</label>
@@ -147,10 +135,9 @@
             <label>רכב באחריות</label>
             <select name="underWarranty">
               <option value="">בחרו</option>
-              <option>כן</option>
-              <option>לא</option>
+              <option>כן</option><option>לא</option>
             </select>
-        </div>
+          </div>
         </div>
         <div><label>התייחסות מפקח</label><textarea name="supervisorNote" rows="3"></textarea></div>
         <div class="actions">
@@ -164,7 +151,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZ1-ysxXPZcOBpJM683uTlr0PT3DerNjRtQOuSLwivJzaoaf-blyBVkoHNeP_qkRtqCw/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-QOA0EwGW7YkCbtLSLpfQYN6M9M6wuI5PEx5Wf1fSDZONk8zpbnM1ly4If0PGaSi2cw/exec";
 let currentPassword = "";
 let allItems = [];
 
@@ -276,7 +263,7 @@ function renderBoard(items) {
       אגף: ${it.department||"–"} &nbsp;|&nbsp; סוג: ${it.serviceType||"–"}<br>
       תקלה: ${it.faultDesc||"–"} &nbsp;|&nbsp; חלק: ${it.partToReplace||"–"}<br>
       סיבה: ${it.stayReason||"–"} &nbsp;|&nbsp; שנה: ${it.modelYear||"–"}<br>
-      רכב חליפי: ${it.replacementCar||"–"}<br>
+      רכב חליפי: ${it.replacementCar||"–"} &nbsp;|&nbsp; באחריות: ${it.underWarranty||"–"}<br>
       התייחסות: ${it.supervisorNote||"–"}<br>
       נכנס: ${it.entryDate||"–"}
       <div class="actions">
@@ -312,6 +299,7 @@ function editReport(id) {
     form.partToReplace.value = it.partToReplace || "";
     form.stayReason.value = it.stayReason || "";
     form.replacementCar.value = it.replacementCar || "";
+    form.underWarranty.value = it.underWarranty || "";
     form.supervisorNote.value = it.supervisorNote || "";
     document.getElementById("formTitle").textContent = "עריכת דיווח";
     document.getElementById("submitBtn").textContent = "עדכן דיווח";
@@ -348,15 +336,13 @@ function submitReport(ev) {
       if (res && res.success) {
         showStatus(statusEl, isEdit ? "הדיווח עודכן בהצלחה" : "הדיווח נשלח בהצלחה", "ok");
         resetForm();
-        // רענון כפוי של הרשימה
         loadActive();
       } else {
         showStatus(statusEl, (res && res.error) || "שגיאה בשמירה", "error");
       }
     })
-    .catch(err => {
-      showStatus(statusEl, "שגיאת תקשורת — נסה לרענן ידנית", "error");
-      console.error(err);
+    .catch(() => {
+      showStatus(statusEl, "שגיאת תקשורת — נסה שוב", "error");
     })
     .finally(() => {
       submitBtn.disabled = false;
@@ -368,7 +354,7 @@ function submitReport(ev) {
 
 function exportCSV() {
   if (!allItems.length) return alert("אין נתונים");
-  const headers = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","supervisorNote","exitDate"];
+  const headers = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","underWarranty","supervisorNote","exitDate"];
   const rows = [headers.join(",")];
   allItems.forEach(it => {
     rows.push(headers.map(h => `"${(it[h]||"").toString().replace(/"/g,'""')}"`).join(","));
