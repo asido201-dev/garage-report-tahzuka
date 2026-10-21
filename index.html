@@ -36,6 +36,11 @@
   .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   #loginScreen{max-width:380px;margin:40px auto}
   .hidden{display:none}
+  @media print {
+    body { background: white; padding: 0; }
+    .toolbar, #reportForm, .actions, button { display: none !important; }
+    .vehicle-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 12px; }
+  }
   @media(max-width:600px){
     .grid{grid-template-columns:1fr}
     h1{font-size:1.3rem}
@@ -151,7 +156,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKTVEDZvTj7jfwb17kJu74dQDQV6BQ2nLHGWArq3j4_kFsR4TC83c869xwsitYcuJSNA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0hSp0xkyTrIejoZJfWShjqubJVPiFz1EwLWOOHmLS7SWYUxFGTJ8Lb38DR-x4GKXKUw/exec";
 let currentPassword = "";
 let allItems = [];
 
@@ -353,22 +358,30 @@ function submitReport(ev) {
 }
 
 function exportCSV() {
-  if (!allItems.length) return alert("אין נתונים");
-  const headers = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","underWarranty","supervisorNote","exitDate"];
-  const rows = [headers.join(",")];
+  if (!allItems.length) return alert("אין נתונים לייצוא");
+  const headersHe = ["מספר רכב","שם המפקח","מוסך מטפל","תאריך כניסה","אגף/מחוז","סוג שירות","שנת דגם","תיאור תקלה","חלק להחלפה","סיבת שהייה","רכב חליפי","רכב באחריות","התייחסות מפקח","תאריך יציאה","ימי שהייה"];
+  const headersEn = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","underWarranty","supervisorNote","exitDate"];
+  const rows = [headersHe.join(",")];
   allItems.forEach(it => {
-    rows.push(headers.map(h => `"${(it[h]||"").toString().replace(/"/g,'""')}"`).join(","));
+    const days = it.exitDate ? "" : daysSince(it.entryDate);
+    const values = headersEn.map(h => (it[h] || "").toString().replace(/"/g, '""'));
+    values.push(days);
+    rows.push(values.map(v => `"${v}"`).join(","));
   });
-  const blob = new Blob(["\uFEFF" + rows.join("\n")], {type:"text/csv;charset=utf-8"});
+  const blob = new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "garage-report.csv";
+  a.download = `דוח_רכב_עומד_ארצי_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
 function exportPDF() {
-  window.print();
-}
-</script>
-</body>
-</html>
+  if (!allItems.length) return alert("אין נתונים לייצוא");
+  const win = window.open("", "_blank");
+  win.document.write(`
+    <html dir="rtl"><head><title>דו"ח רכב עומד ארצי</title>
+    <style>body{font-family:Arial;direction:rtl;padding:20px}h1{text-align:center}table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}th,td{border:1px solid #ccc;padding:6px;text-align:right}th{background:#3b5bdb;color:white}tr:nth-child(even){background:#f8f9fa}</style>
+    </head><body>
+    <h1>דו"ח רכב עומד ארצי</h1>
+    <p style="text-align:center">תאריך הפקה: ${new Date().toLocaleDateString("he-IL")} | סה"כ: ${allItems.length} רכבים</p>
+    <table><thead><tr><th>מספר רכב</th><th>מפקח</th><th>מוסך</th><th>תאריך 
