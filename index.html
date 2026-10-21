@@ -23,6 +23,7 @@
   button.danger{background:var(--fault)}
   button.danger:hover{background:#c92a2a}
   button.ok{background:var(--ok)}
+  button:disabled{opacity:0.65;cursor:not-allowed;transform:none;box-shadow:none}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
   .status{padding:10px;border-radius:8px;margin:8px 0;display:none}
   .status.show{display:block}
@@ -60,7 +61,7 @@
       <input type="text" id="searchPlate" placeholder="חיפוש לפי מספר רכב">
       <select id="filterSupervisor"><option value="">כל המפקחים</option></select>
       <button onclick="applyFilters()">סנן</button>
-      <button class="secondary" onclick="loadActive()">הצג הכל</button>
+      <button class="secondary" onclick="loadActive()">רענון</button>
       <button class="ok" onclick="exportCSV()">ייצוא Excel</button>
       <button class="secondary" onclick="exportPDF()">ייצוא PDF</button>
     </div>
@@ -120,7 +121,7 @@
               <option value="">בחרו</option>
               <option>ממתין לאבחון</option><option>ממתין להצעה</option><option>ממתין לשמאי</option>
               <option>עבודה</option><option>חלפים</option><option>ממתין לאישור ענבל</option>
-              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון/השבתה</option>
+              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון / השבתה</option>
             </select>
           </div>
           <div>
@@ -143,7 +144,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-m3kchRGzzfpWqgzyhiNDmC3ir3xX70dI86_hLrr8fOjfKbL6KICrfgb81XkR73gMNQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZ1-ysxXPZcOBpJM683uTlr0PT3DerNjRtQOuSLwivJzaoaf-blyBVkoHNeP_qkRtqCw/exec";
 let currentPassword = "";
 let allItems = [];
 
@@ -174,7 +175,7 @@ function jsonp(params) {
 function showStatus(el, msg, kind) {
   el.textContent = msg;
   el.className = "status show " + kind;
-  setTimeout(() => el.classList.remove("show"), 3500);
+  setTimeout(() => el.classList.remove("show"), 4000);
 }
 
 function doLogin() {
@@ -313,16 +314,33 @@ function submitReport(ev) {
   ev.preventDefault();
   const form = ev.target;
   const data = new FormData(form);
-  const params = { action: form.id.value ? "update" : "add" };
-  for (const [k,v] of data.entries()) params[k] = v;
+  const isEdit = !!form.id.value;
+  const params = { action: isEdit ? "update" : "add" };
+  for (const [k, v] of data.entries()) params[k] = v;
+
   const statusEl = document.getElementById("formStatus");
-  jsonp(params).then(res => {
-    if (res.success) {
-      showStatus(statusEl, form.id.value ? "הדיווח עודכן" : "הדיווח נשלח", "ok");
-      resetForm();
-      loadActive();
-    } else showStatus(statusEl, res.error || "שגיאה", "error");
-  }).catch(() => showStatus(statusEl, "שגיאת תקשורת", "error"));
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "שולח...";
+
+  jsonp(params)
+    .then(res => {
+      if (res.success) {
+        showStatus(statusEl, isEdit ? "הדיווח עודכן בהצלחה" : "הדיווח נשלח בהצלחה", "ok");
+        resetForm();
+        setTimeout(() => loadActive(), 400);
+      } else {
+        showStatus(statusEl, res.error || "שגיאה בשמירה", "error");
+      }
+    })
+    .catch(() => {
+      showStatus(statusEl, "שגיאת תקשורת — נסה שוב", "error");
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = isEdit ? "עדכן דיווח" : "שלח דיווח";
+    });
+
   return false;
 }
 
