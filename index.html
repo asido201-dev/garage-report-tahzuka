@@ -325,16 +325,18 @@ function submitReport(ev) {
 
   jsonp(params)
     .then(res => {
-      if (res.success) {
+      if (res && res.success) {
         showStatus(statusEl, isEdit ? "הדיווח עודכן בהצלחה" : "הדיווח נשלח בהצלחה", "ok");
         resetForm();
-        setTimeout(() => loadActive(), 400);
+        // רענון כפוי של הרשימה
+        loadActive();
       } else {
-        showStatus(statusEl, res.error || "שגיאה בשמירה", "error");
+        showStatus(statusEl, (res && res.error) || "שגיאה בשמירה", "error");
       }
     })
-    .catch(() => {
-      showStatus(statusEl, "שגיאת תקשורת — נסה שוב", "error");
+    .catch(err => {
+      showStatus(statusEl, "שגיאת תקשורת — נסה לרענן ידנית", "error");
+      console.error(err);
     })
     .finally(() => {
       submitBtn.disabled = false;
