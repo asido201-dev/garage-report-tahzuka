@@ -156,7 +156,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJCFSa3EyIoQ3hUqbKFJd-pLgzZAUHgCB7QBoOWbcwyM-FFn4oWivaxfJj9q-Iz6_YHg/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFOJwKwsw3GgK40L4atR0Tb5Xt7fsG2ywVeAnThrbeooOhXk5s8uyGl58IOmPCVhPA/exec";
 let currentPassword = "";
 let allItems = [];
 
@@ -384,4 +384,13 @@ function exportPDF() {
     </head><body>
     <h1>דו"ח רכב עומד ארצי</h1>
     <p style="text-align:center">תאריך הפקה: ${new Date().toLocaleDateString("he-IL")} | סה"כ: ${allItems.length} רכבים</p>
-    <table><thead><tr><th>מספר רכב</th><th>מפקח</th><th>מוסך</th><th>תאריך 
+    <table><thead><tr><th>מספר רכב</th><th>מפקח</th><th>מוסך</th><th>תאריך כניסה</th><th>אגף</th><th>סוג שירות</th><th>תקלה</th><th>סיבת שהייה</th><th>ימי שהייה</th><th>התייחסות</th></tr></thead>
+    <tbody>${allItems.map(it => `<tr><td>${it.plate||""}</td><td>${it.supervisor||""}</td><td>${it.garage||""}</td><td>${it.entryDate||""}</td><td>${it.department||""}</td><td>${it.serviceType||""}</td><td>${it.faultDesc||""}</td><td>${it.stayReason||""}</td><td>${it.exitDate ? "יצא" : daysSince(it.entryDate)}</td><td>${it.supervisorNote||""}</td></tr>`).join("")}</tbody></table>
+    </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+</script>
+</body>
+</html>
