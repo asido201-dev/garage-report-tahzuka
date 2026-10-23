@@ -7,7 +7,7 @@
 <style>
   :root{--bg:#f4f6fb;--surface:#fff;--surface-2:#eef1f8;--ink:#1c1e26;--ink-dim:#5f6473;--primary:#3b5bdb;--primary-dark:#2f4ac4;--fault:#e03131;--ok:#2f9e44;--radius:14px}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:12px;line-height:1.45}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:12px;line-height:1.45;padding-bottom:90px}
   .container{max-width:980px;margin:0 auto}
   h1{margin:0 0 6px;font-size:1.45rem}
   .sub{color:var(--ink-dim);margin:0 0 16px;font-size:.95rem}
@@ -15,32 +15,28 @@
   label{display:block;font-size:.85rem;margin-bottom:4px;color:var(--ink-dim);font-weight:500}
   input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid transparent;border-radius:10px;background:var(--surface-2);font-size:1rem;margin-bottom:10px}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);background:#fff}
-  button{background:var(--primary);color:#fff;border:none;padding:11px 16px;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600;transition:transform .15s ease,background .15s ease,box-shadow .15s ease}
-  button:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.12)}
-  button:active{transform:translateY(0);box-shadow:none}
+  button{background:var(--primary);color:#fff;border:none;padding:11px 16px;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600}
   button.secondary{background:#6c757d}
-  button.secondary:hover{background:#5a6268}
   button.danger{background:var(--fault)}
-  button.danger:hover{background:#c92a2a}
-  button.ok{background:var(--ok)}
-  button:disabled{opacity:0.65;cursor:not-allowed;transform:none;box-shadow:none}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
   .status{padding:10px;border-radius:8px;margin:8px 0;display:none}
   .status.show{display:block}
   .status.ok{background:#e6f4ea;color:var(--ok)}
   .status.error{background:#fdecea;color:var(--fault)}
-  .vehicle-card{border:1px solid #e6e8ef;border-radius:12px;padding:12px;margin-bottom:10px;background:#fafbff}
-  .days{font-weight:700;color:var(--primary)}
   .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
   .toolbar input,.toolbar select{margin:0;flex:1;min-width:140px}
-  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   #loginScreen{max-width:380px;margin:40px auto}
   .hidden{display:none}
-  @media(max-width:600px){
-    .grid{grid-template-columns:1fr}
-    h1{font-size:1.3rem}
-    .toolbar{flex-direction:column;align-items:stretch}
-  }
+  .vehicle-card{position:relative;border:none;border-radius:16px;padding:14px 16px 14px 20px;margin-bottom:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.06);overflow:hidden}
+  .vehicle-card::before{content:"";position:absolute;top:0;right:0;width:6px;height:100%;background:#3b5bdb}
+  .vehicle-card.long::before{background:#e03131}
+  .vehicle-card.medium::before{background:#f59f00}
+  .vehicle-card.short::before{background:#2f9e44}
+  .days{font-weight:700;color:var(--primary)}
+  .fab{position:fixed;bottom:24px;left:24px;width:60px;height:60px;border-radius:50%;background:#3b5bdb;color:#fff;border:none;font-size:32px;box-shadow:0 6px 16px rgba(59,91,219,0.4);z-index:1000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .fab:active{transform:scale(0.95)}
+  @media(max-width:600px){.grid{grid-template-columns:1fr}.toolbar{flex-direction:column;align-items:stretch}}
 </style>
 </head>
 <body>
@@ -62,12 +58,15 @@
       <select id="filterSupervisor"><option value="">כל המפקחים</option></select>
       <button onclick="applyFilters()">סנן</button>
       <button class="secondary" onclick="loadActive()">רענון</button>
-      <button class="ok" onclick="exportCSV()">ייצוא Excel</button>
-      <button class="secondary" onclick="exportPDF()">ייצוא PDF</button>
+      <button class="ok" onclick="exportCSV()">Excel</button>
+      <button class="secondary" onclick="exportPDF()">PDF</button>
     </div>
 
     <div id="board" class="card">
-      <h2 style="margin:0 0 12px;font-size:1.15rem">כלי רכב במוסך כרגע</h2>
+      <h2 style="margin:0 0 12px;font-size:1.15rem">
+        כלי רכב במוסך כרגע
+        <span id="vehicleCount" style="background:#3b5bdb;color:#fff;padding:2px 10px;border-radius:12px;font-size:0.9rem;margin-right:8px;">0</span>
+      </h2>
       <div id="boardList">טוען...</div>
     </div>
 
@@ -126,17 +125,11 @@
           </div>
           <div>
             <label>רכב חליפי</label>
-            <select name="replacementCar">
-              <option value="">בחרו</option>
-              <option>כן</option><option>לא</option>
-            </select>
+            <select name="replacementCar"><option value="">בחרו</option><option>כן</option><option>לא</option></select>
           </div>
           <div>
             <label>רכב באחריות</label>
-            <select name="underWarranty">
-              <option value="">בחרו</option>
-              <option>כן</option><option>לא</option>
-            </select>
+            <select name="underWarranty"><option value="">בחרו</option><option>כן</option><option>לא</option></select>
           </div>
         </div>
         <div><label>התייחסות מפקח</label><textarea name="supervisorNote" rows="3"></textarea></div>
@@ -150,8 +143,10 @@
   </div>
 </div>
 
+<button class="fab" onclick="document.getElementById('reportForm').scrollIntoView({behavior:'smooth'})">+</button>
+
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxprFRYeqgp5LN4eiYRa0EwH0BF2RkNfXfhp_5RUJswsmUjOT9PeZ3r_MzSW-Lj7qJILg/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxprFRYeqgp5LN4eiYRa0EwH0BF2RkNfXfhp_5RUJswsmUjOT9PeZ3r_MzSW-Lj7qJILg/exec״;
 let currentPassword = "";
 let allItems = [];
 
@@ -249,25 +244,29 @@ function daysSinceNum(dateStr) {
 
 function renderBoard(items) {
   const list = document.getElementById("boardList");
+  const countEl = document.getElementById("vehicleCount");
+  if (countEl) countEl.textContent = items.length;
+
   if (!items.length) { list.innerHTML = "<p>אין רכבים להצגה</p>"; return; }
+
   list.innerHTML = items.map(it => {
     const daysNum = it.exitDate ? 0 : daysSinceNum(it.entryDate);
     const daysText = it.exitDate ? "יצא" : daysSince(it.entryDate);
-    let border = "#e6e8ef";
-    let bg = "#fafbff";
-    if (!it.exitDate && daysNum >= 14) { border = "#e03131"; bg = "#fff5f5"; }
-    else if (!it.exitDate && daysNum >= 7) { border = "#f59f00"; bg = "#fff9db"; }
-    return `<div class="vehicle-card" style="border-color:${border};background:${bg}">
-      <strong>${it.plate||"–"}</strong> &nbsp;|&nbsp; <span class="days">${daysText}</span><br>
-      מפקח: ${it.supervisor||"–"} &nbsp;|&nbsp; מוסך: ${it.garage||"–"}<br>
-      אגף: ${it.department||"–"} &nbsp;|&nbsp; סוג: ${it.serviceType||"–"}<br>
-      תקלה: ${it.faultDesc||"–"} &nbsp;|&nbsp; חלק: ${it.partToReplace||"–"}<br>
-      סיבה: ${it.stayReason||"–"} &nbsp;|&nbsp; שנה: ${it.modelYear||"–"}<br>
-      רכב חליפי: ${it.replacementCar||"–"} &nbsp;|&nbsp; באחריות: ${it.underWarranty||"–"}<br>
-      התייחסות: ${it.supervisorNote||"–"}<br>
-      נכנס: ${it.entryDate||"–"}
+    let statusClass = "short";
+    if (!it.exitDate && daysNum >= 14) statusClass = "long";
+    else if (!it.exitDate && daysNum >= 7) statusClass = "medium";
+
+    return `<div class="vehicle-card ${statusClass}">
+      <strong style="font-size:1.1rem">${it.plate||"–"}</strong>
+      <span class="days" style="float:left">${daysText}</span><br>
+      <div style="margin-top:6px;font-size:0.92rem;color:#444">
+        מפקח: ${it.supervisor||"–"}<br>
+        מוסך: ${it.garage||"–"}<br>
+        אגף: ${it.department||"–"} | ${it.serviceType||"–"}<br>
+        תקלה: ${it.faultDesc||"–"}
+      </div>
       <div class="actions">
-        ${!it.exitDate ? `<button class="danger" onclick="markExit('${it.id}')">יצא מהמוסך</button>` : `<span>יצא ב-${it.exitDate}</span>`}
+        ${!it.exitDate ? `<button class="danger" onclick="markExit('${it.id}')">יצא</button>` : ""}
         <button class="secondary" onclick="editReport('${it.id}')">עריכה</button>
       </div>
     </div>`;
@@ -325,115 +324,57 @@ function submitReport(ev) {
   const isEdit = !!form.id.value;
   const params = { action: isEdit ? "update" : "add" };
   for (const [k, v] of data.entries()) params[k] = v;
-
   const statusEl = document.getElementById("formStatus");
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
   submitBtn.textContent = "שולח...";
-
-  jsonp(params)
-    .then(res => {
-      if (res && res.success) {
-        showStatus(statusEl, isEdit ? "הדיווח עודכן בהצלחה" : "הדיווח נשלח בהצלחה", "ok");
-        resetForm();
-        loadActive();
-      } else {
-        showStatus(statusEl, (res && res.error) || "שגיאה בשמירה", "error");
-      }
-    })
-    .catch(() => {
-      showStatus(statusEl, "שגיאת תקשורת — נסה שוב", "error");
-    })
+  jsonp(params).then(res => {
+    if (res && res.success) {
+      showStatus(statusEl, isEdit ? "הדיווח עודכן בהצלחה" : "הדיווח נשלח בהצלחה", "ok");
+      resetForm();
+      loadActive();
+    } else {
+      showStatus(statusEl, (res && res.error) || "שגיאה בשמירה", "error");
+    }
+  }).catch(() => showStatus(statusEl, "שגיאת תקשורת", "error"))
     .finally(() => {
       submitBtn.disabled = false;
       submitBtn.textContent = isEdit ? "עדכן דיווח" : "שלח דיווח";
     });
-
   return false;
 }
 
 function exportCSV() {
-  if (!allItems.length) return alert("אין נתונים לייצוא");
-  const headersHe = ["מספר רכב","שם המפקח","מוסך מטפל","תאריך כניסה","אגף/מחוז","סוג שירות","שנת דגם","תיאור תקלה","חלק להחלפה","סיבת שהייה","רכב חליפי","רכב באחריות","התייחסות מפקח","תאריך יציאה","ימי שהייה"];
+  if (!allItems.length) return alert("אין נתונים");
+  const headersHe = ["מספר רכב","מפקח","מוסך","תאריך כניסה","אגף","סוג שירות","שנת דגם","תקלה","חלק","סיבת שהייה","חליפי","באחריות","התייחסות","יציאה","ימי שהייה"];
   const headersEn = ["plate","supervisor","garage","entryDate","department","serviceType","modelYear","faultDesc","partToReplace","stayReason","replacementCar","underWarranty","supervisorNote","exitDate"];
   const rows = [headersHe.join(",")];
   allItems.forEach(it => {
     const days = it.exitDate ? "" : daysSince(it.entryDate);
-    const values = headersEn.map(h => (it[h] || "").toString().replace(/"/g, '""'));
+    const values = headersEn.map(h => (it[h]||"").toString().replace(/"/g,'""'));
     values.push(days);
-    rows.push(values.map(v => `"${v}"`).join(","));
+    rows.push(values.map(v=>`"${v}"`).join(","));
   });
-  const blob = new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["\uFEFF"+rows.join("\n")], {type:"text/csv;charset=utf-8;"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `דוח_רכב_עומד_ארצי_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `דוח_רכב_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
 function exportPDF() {
-  if (!allItems.length) return alert("אין נתונים לייצוא");
-
+  if (!allItems.length) return alert("אין נתונים");
   const win = window.open("", "_blank");
   const today = new Date().toLocaleDateString("he-IL");
-  win.document.write(`
-    <!DOCTYPE html>
-    <html dir="rtl">
-    <head>
-      <meta charset="UTF-8">
-      <title>דו"ח רכב עומד ארצי</title>
-      <style>
-        body { font-family: Arial, sans-serif; direction: rtl; margin: 20px; color: #222; }
-        h1 { text-align: center; color: #1a365d; margin-bottom: 5px; }
-        .meta { text-align: center; color: #555; margin-bottom: 20px; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #2b6cb0; color: white; padding: 8px 6px; text-align: right; }
-        td { border: 1px solid #ddd; padding: 6px; text-align: right; }
-        tr:nth-child(even) { background: #f7fafc; }
-        .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #718096; }
-      </style>
-    </head>
-    <body>
-      <h1>דו"ח רכב עומד ארצי</h1>
-      <div class="meta">תאריך הפקה: ${today} &nbsp;|&nbsp; סה"כ רכבים: ${allItems.length}</div>
-      <table>
-        <thead>
-          <tr>
-            <th>מספר רכב</th>
-            <th>מפקח</th>
-            <th>מוסך</th>
-            <th>תאריך כניסה</th>
-            <th>אגף</th>
-            <th>סוג שירות</th>
-            <th>תקלה</th>
-            <th>סיבת שהייה</th>
-            <th>ימי שהייה</th>
-            <th>התייחסות</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${allItems.map(it => `
-            <tr>
-              <td><strong>${it.plate || ""}</strong></td>
-              <td>${it.supervisor || ""}</td>
-              <td>${it.garage || ""}</td>
-              <td>${it.entryDate || ""}</td>
-              <td>${it.department || ""}</td>
-              <td>${it.serviceType || ""}</td>
-              <td>${it.faultDesc || ""}</td>
-              <td>${it.stayReason || ""}</td>
-              <td>${it.exitDate ? "יצא" : daysSince(it.entryDate)}</td>
-              <td>${it.supervisorNote || ""}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-      <div class="footer">דו"ח רכב עומד ארצי — הופק אוטומטית</div>
-    </body>
-    </html>
-  `);
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>דו"ח רכב עומד ארצי</title>
+  <style>body{font-family:Arial;direction:rtl;margin:20px}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#2b6cb0;color:#fff;padding:8px}td{border:1px solid #ddd;padding:6px}tr:nth-child(even){background:#f7fafc}</style>
+  </head><body><h1>דו"ח רכב עומד ארצי</h1><p style="text-align:center">תאריך: ${today} | סה"כ: ${allItems.length}</p>
+  <table><thead><tr><th>מספר רכב</th><th>מפקח</th><th>מוסך</th><th>כניסה</th><th>אגף</th><th>סוג</th><th>תקלה</th><th>סיבה</th><th>ימים</th><th>התייחסות</th></tr></thead>
+  <tbody>${allItems.map(it=>`<tr><td><b>${it.plate||""}</b></td><td>${it.supervisor||""}</td><td>${it.garage||""}</td><td>${it.entryDate||""}</td><td>${it.department||""}</td><td>${it.serviceType||""}</td><td>${it.faultDesc||""}</td><td>${it.stayReason||""}</td><td>${it.exitDate?"יצא":daysSince(it.entryDate)}</td><td>${it.supervisorNote||""}</td></tr>`).join("")}</tbody></table>
+  </body></html>`);
   win.document.close();
   win.focus();
-  setTimeout(() => { win.print(); }, 500);
+  setTimeout(()=>win.print(), 400);
 }
 </script>
 </body>
