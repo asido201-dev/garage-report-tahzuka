@@ -146,7 +146,7 @@
 <button class="fab" onclick="document.getElementById('reportForm').scrollIntoView({behavior:'smooth'})">+</button>
 
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiVr8l_T-bseC4kVxqrI0HYTkFfV6veYHx5w0daJ3lL59nvzFjfq3xg6qYfEgtKfCEKA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLBOT8JS6nTdpRInwTfYAi0hIe1ytJtY1YA38EbCCwqGOygZ-7b-wzmAIUyWibwIga-A/exec";
 let currentPassword = "";
 let allItems = [];
 
@@ -246,16 +246,13 @@ function renderBoard(items) {
   const list = document.getElementById("boardList");
   const countEl = document.getElementById("vehicleCount");
   if (countEl) countEl.textContent = items.length;
-
   if (!items.length) { list.innerHTML = "<p>אין רכבים להצגה</p>"; return; }
-
   list.innerHTML = items.map(it => {
     const daysNum = it.exitDate ? 0 : daysSinceNum(it.entryDate);
     const daysText = it.exitDate ? "יצא" : daysSince(it.entryDate);
     let statusClass = "short";
     if (!it.exitDate && daysNum >= 14) statusClass = "long";
     else if (!it.exitDate && daysNum >= 7) statusClass = "medium";
-
     return `<div class="vehicle-card ${statusClass}">
       <strong style="font-size:1.1rem">${it.plate||"–"}</strong>
       <span class="days" style="float:left">${daysText}</span><br>
@@ -290,7 +287,14 @@ function editReport(id) {
     form.plate.value = it.plate || "";
     form.supervisor.value = it.supervisor || "";
     form.garage.value = it.garage || "";
-    form.entryDate.value = it.entryDate || "";
+
+    let entryDate = it.entryDate || "";
+    if (entryDate) {
+      const d = new Date(entryDate);
+      if (!isNaN(d)) entryDate = d.toISOString().slice(0, 10);
+    }
+    form.entryDate.value = entryDate;
+
     form.department.value = it.department || "";
     form.serviceType.value = it.serviceType || "";
     form.modelYear.value = it.modelYear || "";
@@ -300,6 +304,7 @@ function editReport(id) {
     form.replacementCar.value = it.replacementCar || "";
     form.underWarranty.value = it.underWarranty || "";
     form.supervisorNote.value = it.supervisorNote || "";
+
     document.getElementById("formTitle").textContent = "עריכת דיווח";
     document.getElementById("submitBtn").textContent = "עדכן דיווח";
     document.getElementById("cancelEdit").style.display = "inline-block";
