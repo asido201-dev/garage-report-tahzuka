@@ -264,7 +264,8 @@ function renderBoard(items) {
       </div>
       <div class="actions">
         ${!it.exitDate ? `<button class="danger" onclick="markExit('${it.id}')">יצא</button>` : ""}
-       <button class="secondary" onclick="editReport('${it.id}')">עריכה/צפייה</button>
+        <button class="secondary" onclick="editReport('${it.id}')">עריכה/צפייה</button>
+      </div>
     </div>`;
   }).join("");
 }
