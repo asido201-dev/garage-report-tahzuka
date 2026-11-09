@@ -56,6 +56,11 @@
     <div class="toolbar">
       <input type="text" id="searchPlate" placeholder="חיפוש לפי מספר רכב">
       <select id="filterSupervisor"><option value="">כל המפקחים</option></select>
+      <select id="filterServiceType">
+        <option value="">כל סוגי השירות</option>
+        <option>תחזוקה</option>
+        <option>תיקון תאונה/נזק</option>
+      </select>
       <button onclick="applyFilters()">סנן</button>
       <button class="secondary" onclick="loadActive()">רענון</button>
       <button class="ok" onclick="exportCSV()">Excel</button>
@@ -86,7 +91,9 @@
               <option>צפון</option><option>דרום</option><option>מרכז</option>
               <option>ירושלים</option><option>תל אביב</option><option>חוף</option>
               <option>ש״י</option><option>מג״ב</option><option>משמר לאומי</option>
-              <option>מטא"ר</option>
+              <option>את״ן</option><option>אג״מ</option><option>אח״מ</option>
+              <option>להב</option><option>את״ל</option><option>אג״ת</option>
+              <option>אמ״ש</option><option>אה״ד</option><option>אק״מ</option>
             </select>
           </div>
           <div>
@@ -108,10 +115,7 @@
               <option>מנוע</option><option>גיר</option><option>חשמל ואלקטרוניקה</option>
               <option>מערכת קירור</option><option>מערכת פליטה</option><option>נזילות שמן</option>
               <option>מערכת היגוי</option><option>מערכת העברת הכח</option><option>בולמים</option>
-              <option>מערכת ABS</option><option>כריות אוויר</option><option>נזק קדמי</option>
-              <option>נזק אחורי</option><option>נזק בתחתית הרכב</option><option>נזק בגג הרכב</option>
-              <option>נזק בצידי הרכב</option><option>נזקי פעולות איבה</option>
-              <option>מספר מוקדי נזק</option><option>תאונה קשה כולל שלדה</option>
+              <option>מערכת ABS</option><option>כריות אוויר</option><option>תיקון ת.ד / נזק</option>
             </select>
           </div>
           <div><label>חלק הנדרש להחלפה</label><input type="text" name="partToReplace"></div>
@@ -193,7 +197,7 @@ function doLogin() {
       document.getElementById("mainContent").classList.remove("hidden");
       allItems = data.items || [];
       populateSupervisors();
-      renderBoard(allItems);
+      applyFilters();
       document.querySelector('input[name="entryDate"]').value = new Date().toISOString().slice(0,10);
     }
   }).catch(() => showStatus(document.getElementById("loginStatus"), "שגיאת תקשורת", "error"));
@@ -202,10 +206,11 @@ function doLogin() {
 function loadActive() {
   document.getElementById("searchPlate").value = "";
   document.getElementById("filterSupervisor").value = "";
+  document.getElementById("filterServiceType").value = "";
   jsonp({ action: "list" }).then(data => {
     allItems = data.items || [];
     populateSupervisors();
-    renderBoard(allItems);
+    applyFilters();
   });
 }
 
@@ -220,9 +225,20 @@ function populateSupervisors() {
 function applyFilters() {
   const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
   const sup = document.getElementById("filterSupervisor").value;
-  let filtered = allItems;
+  const service = document.getElementById("filterServiceType").value;
+
+  let filtered = allItems.slice();
   if (plate) filtered = filtered.filter(i => String(i.plate).toLowerCase().includes(plate));
   if (sup) filtered = filtered.filter(i => i.supervisor === sup);
+  if (service) filtered = filtered.filter(i => i.serviceType === service);
+
+  // מיון לפי ימי שהייה מהגבוה לנמוך
+  filtered.sort((a, b) => {
+    const daysA = a.exitDate ? 0 : daysSinceNum(a.entryDate);
+    const daysB = b.exitDate ? 0 : daysSinceNum(b.entryDate);
+    return daysB - daysA;
+  });
+
   renderBoard(filtered);
 }
 
