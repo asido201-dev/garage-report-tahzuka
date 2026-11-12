@@ -52,7 +52,6 @@
   <div id="mainContent" class="hidden">
     <h1>דו"ח רכב עומד ארצי</h1>
     <p class="sub">דיווח ועדכון רכבים בטיפול</p>
-
     <div class="toolbar">
       <input type="text" id="searchPlate" placeholder="חיפוש לפי מספר רכב">
       <select id="filterSupervisor"><option value="">כל המפקחים</option></select>
@@ -66,7 +65,6 @@
       <button class="ok" onclick="exportCSV()">Excel</button>
       <button class="secondary" onclick="exportPDF()">PDF</button>
     </div>
-
     <div id="board" class="card">
       <h2 style="margin:0 0 12px;font-size:1.15rem">
         כלי רכב במוסך כרגע
@@ -74,7 +72,6 @@
       </h2>
       <div id="boardList">טוען...</div>
     </div>
-
     <div class="card">
       <h2 style="margin:0 0 12px;font-size:1.15rem" id="formTitle">דיווח חדש</h2>
       <form id="reportForm" onsubmit="return submitReport(event)">
@@ -155,14 +152,11 @@
     </div>
   </div>
 </div>
-
 <button class="fab" onclick="document.getElementById('reportForm').scrollIntoView({behavior:'smooth'})">+</button>
-
 <script>
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyA1CiSnsjPE3FkU-gj9nr4Q0PEikta6LNFPLJreVYktM9_b-911-qMxhp-nc3jhzP5TQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLDwtUN_SG7E607shnvXcsGNU1VcMpoMip1mF-6CSXecUGISXSsT-mS-kYXwhiv_OYsw/exec";
 let currentPassword = "";
 let allItems = [];
-
 (function fillYears(){
   const sel = document.getElementById("modelYearSelect");
   for(let y=2027; y>=1970; y--){
@@ -171,17 +165,11 @@ let allItems = [];
     sel.appendChild(o);
   }
 })();
-
 document.getElementById("noForecast").addEventListener("change", function() {
   const input = document.getElementById("exitForecastDays");
-  if (this.checked) {
-    input.value = "";
-    input.disabled = true;
-  } else {
-    input.disabled = false;
-  }
+  if (this.checked) { input.value = ""; input.disabled = true; }
+  else input.disabled = false;
 });
-
 function jsonp(params) {
   return new Promise((resolve, reject) => {
     const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -196,13 +184,11 @@ function jsonp(params) {
     document.body.appendChild(script);
   });
 }
-
 function showStatus(el, msg, kind) {
   el.textContent = msg;
   el.className = "status show " + kind;
   setTimeout(() => el.classList.remove("show"), 4000);
 }
-
 function doLogin() {
   currentPassword = document.getElementById("loginPassword").value.trim();
   if (!currentPassword) return;
@@ -220,7 +206,6 @@ function doLogin() {
     }
   }).catch(() => showStatus(document.getElementById("loginStatus"), "שגיאת תקשורת", "error"));
 }
-
 function loadActive() {
   document.getElementById("searchPlate").value = "";
   document.getElementById("filterSupervisor").value = "";
@@ -231,7 +216,6 @@ function loadActive() {
     applyFilters();
   });
 }
-
 function populateSupervisors() {
   const sel = document.getElementById("filterSupervisor");
   const current = sel.value;
@@ -239,26 +223,21 @@ function populateSupervisors() {
   sel.innerHTML = '<option value="">כל המפקחים</option>' + names.map(n => `<option>${n}</option>`).join("");
   if (names.includes(current)) sel.value = current;
 }
-
 function applyFilters() {
   const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
   const sup = document.getElementById("filterSupervisor").value;
   const service = document.getElementById("filterServiceType").value;
-
   let filtered = allItems.slice();
   if (plate) filtered = filtered.filter(i => String(i.plate).toLowerCase().includes(plate));
   if (sup) filtered = filtered.filter(i => i.supervisor === sup);
   if (service) filtered = filtered.filter(i => i.serviceType === service);
-
   filtered.sort((a, b) => {
     const daysA = a.exitDate ? 0 : daysSinceNum(a.entryDate);
     const daysB = b.exitDate ? 0 : daysSinceNum(b.entryDate);
     return daysB - daysA;
   });
-
   renderBoard(filtered);
 }
-
 function daysSince(dateStr) {
   if (!dateStr) return "–";
   const d = new Date(dateStr.slice(0,10));
@@ -267,7 +246,6 @@ function daysSince(dateStr) {
   const diff = Math.round((now - d) / 86400000);
   return diff === 0 ? "היום" : diff === 1 ? "יום 1" : diff + " ימים";
 }
-
 function daysSinceNum(dateStr) {
   if (!dateStr) return 0;
   const d = new Date(dateStr.slice(0,10));
@@ -275,7 +253,6 @@ function daysSinceNum(dateStr) {
   const now = new Date(); now.setHours(0,0,0,0);
   return Math.round((now - d) / 86400000);
 }
-
 function renderBoard(items) {
   const list = document.getElementById("boardList");
   const countEl = document.getElementById("vehicleCount");
@@ -305,7 +282,6 @@ function renderBoard(items) {
     </div>`;
   }).join("");
 }
-
 function markExit(id) {
   if (!confirm("לסמן שהרכב יצא מהמוסך?")) return;
   jsonp({ action: "exit", id }).then(data => {
@@ -313,7 +289,6 @@ function markExit(id) {
     else alert(data.error || "שגיאה");
   });
 }
-
 function editReport(id) {
   jsonp({ action: "getOne", id }).then(data => {
     if (!data.item) return alert("לא נמצא");
@@ -323,14 +298,12 @@ function editReport(id) {
     form.plate.value = it.plate || "";
     form.supervisor.value = it.supervisor || "";
     form.garage.value = it.garage || "";
-
     let entryDate = it.entryDate || "";
     if (entryDate) {
       const d = new Date(entryDate);
       if (!isNaN(d)) entryDate = d.toISOString().slice(0, 10);
     }
     form.entryDate.value = entryDate;
-
     form.department.value = it.department || "";
     form.serviceType.value = it.serviceType || "";
     form.modelYear.value = it.modelYear || "";
@@ -340,7 +313,6 @@ function editReport(id) {
     form.replacementCar.value = it.replacementCar || "";
     form.underWarranty.value = it.underWarranty || "";
     form.supervisorNote.value = it.supervisorNote || "";
-
     const noForecast = document.getElementById("noForecast");
     const forecastInput = document.getElementById("exitForecastDays");
     if (!it.exitForecastDays) {
@@ -352,14 +324,12 @@ function editReport(id) {
       forecastInput.disabled = false;
       forecastInput.value = it.exitForecastDays;
     }
-
     document.getElementById("formTitle").textContent = "עריכת דיווח";
     document.getElementById("submitBtn").textContent = "עדכן דיווח";
     document.getElementById("cancelEdit").style.display = "inline-block";
     form.scrollIntoView({behavior:"smooth"});
   });
 }
-
 function resetForm() {
   const form = document.getElementById("reportForm");
   form.reset();
@@ -371,7 +341,6 @@ function resetForm() {
   document.getElementById("cancelEdit").style.display = "none";
   document.querySelector('input[name="entryDate"]').value = new Date().toISOString().slice(0,10);
 }
-
 function submitReport(ev) {
   ev.preventDefault();
   const form = ev.target;
@@ -380,7 +349,6 @@ function submitReport(ev) {
   const params = { action: isEdit ? "update" : "add" };
   for (const [k, v] of data.entries()) params[k] = v;
   if (document.getElementById("noForecast").checked) params.exitForecastDays = "";
-
   const statusEl = document.getElementById("formStatus");
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
@@ -400,7 +368,6 @@ function submitReport(ev) {
     });
   return false;
 }
-
 function exportCSV() {
   if (!allItems.length) return alert("אין נתונים");
   const headersHe = ["מספר רכב","מפקח","מוסך","תאריך כניסה","אגף","סוג שירות","שנת דגם","תקלה","חלק","סיבת שהייה","צפי יציאה","חליפי","באחריות","התייחסות","יציאה","ימי שהייה"];
@@ -418,29 +385,23 @@ function exportCSV() {
   a.download = `דוח_רכב_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
-
 function exportPDF() {
   const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
   const sup = document.getElementById("filterSupervisor").value;
   const service = document.getElementById("filterServiceType").value;
-
   let filtered = allItems.slice();
   if (plate) filtered = filtered.filter(i => String(i.plate).toLowerCase().includes(plate));
   if (sup) filtered = filtered.filter(i => i.supervisor === sup);
   if (service) filtered = filtered.filter(i => i.serviceType === service);
-
   if (!filtered.length) return alert("אין נתונים לפי הסינון הנוכחי");
-
   const sorted = filtered.sort((a, b) => {
     const daysA = a.exitDate ? 0 : daysSinceNum(a.entryDate);
     const daysB = b.exitDate ? 0 : daysSinceNum(b.entryDate);
     return daysB - daysA;
   });
-
   const win = window.open("", "_blank");
   const today = new Date().toLocaleDateString("he-IL");
-  const title = sup ? `דו"ח רכב עומד ארצי - ${sup}` : "דו"ח רכב עומד ארצי";
-
+  const title = sup ? "דוח רכב עומד ארצי - " + sup : "דוח רכב עומד ארצי";
   win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${title}</title>
   <style>body{font-family:Arial;direction:rtl;margin:20px}h1{text-align:center}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#2b6cb0;color:#fff;padding:8px}td{border:1px solid #ddd;padding:6px}tr:nth-child(even){background:#f7fafc}</style>
   </head><body><h1>${title}</h1><p style="text-align:center">תאריך: ${today} | סה"כ: ${sorted.length}</p>
