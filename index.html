@@ -78,7 +78,28 @@
         <input type="hidden" name="id" id="editId">
         <div class="grid">
           <div><label>מספר רכב *</label><input type="text" name="plate" required></div>
-          <div><label>שם המפקח *</label><input type="text" name="supervisor" required></div>
+          <div>
+  <label>שם המפקח *</label>
+  <input type="text" name="supervisor" list="supervisorList" required placeholder="בחר או הקלד">
+  <datalist id="supervisorList">
+    <option value="אורן">
+    <option value="אלכס">
+    <option value="דקל">
+    <option value="הישאם">
+    <option value="וסים">
+    <option value="חזי">
+    <option value="יוסף">
+    <option value="מישל">
+    <option value="מנדי">
+    <option value="מני">
+    <option value="סיימון">
+    <option value="עוזי">
+    <option value="עימאד">
+    <option value="ערן">
+    <option value="ריאד">
+    <option value="רמי">
+  </datalist>
+</div>
           <div><label>מוסך מטפל</label><input type="text" name="garage"></div>
           <div><label>תאריך כניסה *</label><input type="date" name="entryDate" required></div>
           <div>
@@ -110,7 +131,7 @@
               <option>מערכת קירור</option><option>מערכת פליטה</option><option>נזילות שמן</option>
               <option>מערכת היגוי</option><option>מערכת העברת הכח</option><option>בולמים</option>
               <option>בלמים</option><option>מערכת ABS</option><option>כריות אוויר</option>
-              <option>תיקון ת.ד / נזק</option>
+              <option>מושבים</option><option>חגורת בטיחות</option><option>תיקון ת.ד / נזק</option>
             </select>
           </div>
           <div><label>חלק הנדרש להחלפה</label><input type="text" name="partToReplace"></div>
@@ -121,7 +142,7 @@
               <option>ממתין לאבחון</option><option>בשלבי אבחון</option><option>ממתין לדו"חות נזק</option>
               <option>ממתין להצעה</option><option>ממתין לשמאי</option>
               <option>עבודה</option><option>חלפים</option><option>ממתין לאישור ענבל</option>
-              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון / השבתה</option>
+              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון / השבתה</option><option>TOTAL-LOST ממתין להשבתה</option>
             </select>
           </div>
           <div>
