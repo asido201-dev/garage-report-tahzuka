@@ -79,27 +79,29 @@
         <div class="grid">
           <div><label>מספר רכב *</label><input type="text" name="plate" required></div>
           <div>
-  <label>שם המפקח *</label>
-  <input type="text" name="supervisor" list="supervisorList" required placeholder="בחר או הקלד">
-  <datalist id="supervisorList">
-    <option value="אורן">
-    <option value="אלכס">
-    <option value="דקל">
-    <option value="הישאם">
-    <option value="וסים">
-    <option value="חזי">
-    <option value="יוסף">
-    <option value="מישל">
-    <option value="מנדי">
-    <option value="מני">
-    <option value="סיימון">
-    <option value="עוזי">
-    <option value="עימאד">
-    <option value="ערן">
-    <option value="ריאד">
-    <option value="רמי">
-  </datalist>
-</div>
+            <label>שם המפקח *</label>
+            <select name="supervisor" id="supervisorSelect" required onchange="toggleCustomSupervisor()">
+              <option value="">בחרו מפקח</option>
+              <option>אורן</option>
+              <option>אלכס</option>
+              <option>דקל</option>
+              <option>הישאם</option>
+              <option>וסים</option>
+              <option>חזי</option>
+              <option>יוסף</option>
+              <option>מישל</option>
+              <option>מנדי</option>
+              <option>מני</option>
+              <option>סיימון</option>
+              <option>עוזי</option>
+              <option>עימאד</option>
+              <option>ערן</option>
+              <option>ריאד</option>
+              <option>רמי</option>
+              <option value="__other__">אחר (הקלד שם)</option>
+            </select>
+            <input type="text" id="customSupervisor" placeholder="הקלד שם מפקח" style="display:none; margin-top:6px;">
+          </div>
           <div><label>מוסך מטפל</label><input type="text" name="garage"></div>
           <div><label>תאריך כניסה *</label><input type="date" name="entryDate" required></div>
           <div>
@@ -142,7 +144,8 @@
               <option>ממתין לאבחון</option><option>בשלבי אבחון</option><option>ממתין לדו"חות נזק</option>
               <option>ממתין להצעה</option><option>ממתין לשמאי</option>
               <option>עבודה</option><option>חלפים</option><option>ממתין לאישור ענבל</option>
-              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון / השבתה</option><option>TOTAL-LOST ממתין להשבתה</option>
+              <option>ממתין לאישור מדור</option><option>ממתין להחלטת תיקון / השבתה</option>
+              <option>TOTAL-LOST ממתין להשבתה</option>
             </select>
           </div>
           <div>
@@ -178,6 +181,7 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQDUWOfpwmQbyMSJE8pCWt5LkgBV90vfY1ggKoeqd3U1b_00LE0biqlabDi15RKVRwnQ/exec";
 let currentPassword = "";
 let allItems = [];
+
 (function fillYears(){
   const sel = document.getElementById("modelYearSelect");
   for(let y=2027; y>=1970; y--){
@@ -186,11 +190,26 @@ let allItems = [];
     sel.appendChild(o);
   }
 })();
+
 document.getElementById("noForecast").addEventListener("change", function() {
   const input = document.getElementById("exitForecastDays");
   if (this.checked) { input.value = ""; input.disabled = true; }
   else input.disabled = false;
 });
+
+function toggleCustomSupervisor() {
+  const sel = document.getElementById("supervisorSelect");
+  const custom = document.getElementById("customSupervisor");
+  if (sel.value === "__other__") {
+    custom.style.display = "block";
+    custom.required = true;
+  } else {
+    custom.style.display = "none";
+    custom.required = false;
+    custom.value = "";
+  }
+}
+
 function jsonp(params) {
   return new Promise((resolve, reject) => {
     const cb = "cb_" + Math.random().toString(36).slice(2);
@@ -205,11 +224,13 @@ function jsonp(params) {
     document.body.appendChild(script);
   });
 }
+
 function showStatus(el, msg, kind) {
   el.textContent = msg;
   el.className = "status show " + kind;
   setTimeout(() => el.classList.remove("show"), 4000);
 }
+
 function doLogin() {
   currentPassword = document.getElementById("loginPassword").value.trim();
   if (!currentPassword) return;
@@ -227,6 +248,7 @@ function doLogin() {
     }
   }).catch(() => showStatus(document.getElementById("loginStatus"), "שגיאת תקשורת", "error"));
 }
+
 function loadActive() {
   document.getElementById("searchPlate").value = "";
   document.getElementById("filterSupervisor").value = "";
@@ -237,6 +259,7 @@ function loadActive() {
     applyFilters();
   });
 }
+
 function populateSupervisors() {
   const sel = document.getElementById("filterSupervisor");
   const current = sel.value;
@@ -244,6 +267,7 @@ function populateSupervisors() {
   sel.innerHTML = '<option value="">כל המפקחים</option>' + names.map(n => `<option>${n}</option>`).join("");
   if (names.includes(current)) sel.value = current;
 }
+
 function applyFilters() {
   const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
   const sup = document.getElementById("filterSupervisor").value;
@@ -259,6 +283,7 @@ function applyFilters() {
   });
   renderBoard(filtered);
 }
+
 function daysSince(dateStr) {
   if (!dateStr) return "–";
   const d = new Date(dateStr.slice(0,10));
@@ -267,6 +292,7 @@ function daysSince(dateStr) {
   const diff = Math.round((now - d) / 86400000);
   return diff === 0 ? "היום" : diff === 1 ? "יום 1" : diff + " ימים";
 }
+
 function daysSinceNum(dateStr) {
   if (!dateStr) return 0;
   const d = new Date(dateStr.slice(0,10));
@@ -274,6 +300,7 @@ function daysSinceNum(dateStr) {
   const now = new Date(); now.setHours(0,0,0,0);
   return Math.round((now - d) / 86400000);
 }
+
 function renderBoard(items) {
   const list = document.getElementById("boardList");
   const countEl = document.getElementById("vehicleCount");
@@ -303,6 +330,7 @@ function renderBoard(items) {
     </div>`;
   }).join("");
 }
+
 function markExit(id) {
   if (!confirm("לסמן שהרכב יצא מהמוסך?")) return;
   jsonp({ action: "exit", id }).then(data => {
@@ -310,6 +338,7 @@ function markExit(id) {
     else alert(data.error || "שגיאה");
   });
 }
+
 function editReport(id) {
   jsonp({ action: "getOne", id }).then(data => {
     if (!data.item) return alert("לא נמצא");
@@ -334,6 +363,7 @@ function editReport(id) {
     form.replacementCar.value = it.replacementCar || "";
     form.underWarranty.value = it.underWarranty || "";
     form.supervisorNote.value = it.supervisorNote || "";
+
     const noForecast = document.getElementById("noForecast");
     const forecastInput = document.getElementById("exitForecastDays");
     if (!it.exitForecastDays) {
@@ -345,23 +375,27 @@ function editReport(id) {
       forecastInput.disabled = false;
       forecastInput.value = it.exitForecastDays;
     }
+
     document.getElementById("formTitle").textContent = "עריכת דיווח";
     document.getElementById("submitBtn").textContent = "עדכן דיווח";
     document.getElementById("cancelEdit").style.display = "inline-block";
     form.scrollIntoView({behavior:"smooth"});
   });
 }
+
 function resetForm() {
   const form = document.getElementById("reportForm");
   form.reset();
   form.id.value = "";
   document.getElementById("noForecast").checked = false;
   document.getElementById("exitForecastDays").disabled = false;
+  document.getElementById("customSupervisor").style.display = "none";
   document.getElementById("formTitle").textContent = "דיווח חדש";
   document.getElementById("submitBtn").textContent = "שלח דיווח";
   document.getElementById("cancelEdit").style.display = "none";
   document.querySelector('input[name="entryDate"]').value = new Date().toISOString().slice(0,10);
 }
+
 function submitReport(ev) {
   ev.preventDefault();
   const form = ev.target;
@@ -369,7 +403,14 @@ function submitReport(ev) {
   const isEdit = !!form.id.value;
   const params = { action: isEdit ? "update" : "add" };
   for (const [k, v] of data.entries()) params[k] = v;
+
+  // טיפול במפקח "אחר"
+  if (document.getElementById("supervisorSelect").value === "__other__") {
+    params.supervisor = document.getElementById("customSupervisor").value.trim();
+  }
+
   if (document.getElementById("noForecast").checked) params.exitForecastDays = "";
+
   const statusEl = document.getElementById("formStatus");
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
@@ -389,6 +430,7 @@ function submitReport(ev) {
     });
   return false;
 }
+
 function exportCSV() {
   if (!allItems.length) return alert("אין נתונים");
   const headersHe = ["מספר רכב","מפקח","מוסך","תאריך כניסה","אגף","סוג שירות","שנת דגם","תקלה","חלק","סיבת שהייה","צפי יציאה","חליפי","באחריות","התייחסות","יציאה","ימי שהייה"];
@@ -406,6 +448,7 @@ function exportCSV() {
   a.download = `דוח_רכב_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
+
 function exportPDF() {
   const plate = document.getElementById("searchPlate").value.trim().toLowerCase();
   const sup = document.getElementById("filterSupervisor").value;
